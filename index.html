@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Chișinău 2040: ce contează</title>
+<meta name="description" content="Chestionar pentru locuitori: ce este valoros în Chișinău, ce trebuie păstrat și ce este inacceptabil. Planul Urbanistic General Chișinău 2040.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+/* Layout: one narrow column, sticky header with tabs; survey as a 6-step stepper, results as a live report */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --ink:#18241e; --muted:#5b6a62; --line:#d9e0db;
+  --accent:#2f7d5b; --accent-soft:#e1efe7; --warn:#b8681a; --warn-soft:#f6e9da;
+  --display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#121915; --surface:#1a231e; --ink:#e6ede8; --muted:#9aaba1; --line:#2c3a32;
+  --accent:#5fb98d; --accent-soft:#1f3a2c; --warn:#e09a52; --warn-soft:#3b2a19; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+header{position:sticky;top:0;z-index:1000;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px 10px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:700;font-size:1.15rem;margin:0;letter-spacing:-.01em}
+h1 span{color:var(--accent)}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.lang button{border:0;background:none;color:var(--muted);font:600 .8rem var(--body);padding:5px 12px;cursor:pointer;letter-spacing:.04em}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.tabs{display:flex;gap:4px;padding-bottom:10px}
+.tabs button{border:0;background:none;font:500 .95rem var(--body);color:var(--muted);padding:6px 12px;border-radius:8px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--ink)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lead{color:var(--muted);margin:18px 0 6px;max-width:62ch}
+.note{font-size:.8rem;color:var(--muted);margin:0 0 18px}
+.banner{background:var(--warn-soft);border-radius:10px;padding:10px 14px;font-size:.9rem;margin-bottom:16px}
+.progress{display:flex;gap:6px;margin:8px 0 18px}
+.progress i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.progress i.on{background:var(--accent)}
+.step{display:grid;gap:16px}
+.step h2{font-family:var(--display);font-weight:500;font-size:1.25rem;margin:0;text-wrap:balance}
+.eyebrow{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.desc{color:var(--muted);margin:0;max-width:62ch}
+.map{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.lmap{height:min(62vh,440px);width:100%}
+.maplegend{display:flex;gap:14px;flex-wrap:wrap;padding:8px 12px;font-size:.8rem;color:var(--muted);border-top:1px solid var(--line)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.pin{border-radius:50%;color:#fff;font:600 12px var(--body);display:grid !important;place-items:center;box-shadow:0 0 0 2px #fff,0 1px 4px rgba(0,0,0,.35)}
+.pin.keep{background:#2f7d5b}.pin.prob{background:#b8681a}
+.pins{display:grid;gap:8px}
+.pinrow{display:grid;grid-template-columns:28px 1fr 32px;gap:8px;align-items:center}
+.pinno{width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--bg);font:600 .8rem var(--body);display:grid;place-items:center}
+.pinno.w{background:var(--warn)}
+input[type=text],input[type=number],textarea{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+textarea{min-height:84px;resize:vertical}
+.x{border:0;background:none;color:var(--muted);font-size:1.1rem;cursor:pointer;border-radius:6px}
+.field{display:grid;gap:6px}
+.field label,.qlabel{font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:.9rem;padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.slider{display:grid;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.slider .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.slider output{font:700 1.1rem var(--display);color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.pair{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:stretch}
+.pair button{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;text-align:left;padding:12px;border-radius:10px;cursor:pointer}
+.pair button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.pair .or{align-self:center;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.budget{display:grid;gap:8px}
+.brow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:1.1rem;cursor:pointer}
+.stepper span{min-width:34px;text-align:center;font-variant-numeric:tabular-nums;font-weight:600}
+.bbar{height:4px;background:var(--line);border-radius:2px;grid-column:1/-1;overflow:hidden}
+.bbar i{display:block;height:100%;background:var(--accent)}
+.left{font-weight:600}
+.left.over{color:var(--warn)}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:22px}
+.btn{font:600 .95rem var(--body);border-radius:10px;padding:10px 18px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.ok{background:var(--accent-soft);border-radius:10px;padding:12px 14px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.res h3{font-family:var(--display);font-weight:500;font-size:1rem;margin:0 0 10px}
+.res section{margin-top:22px}
+.big{font:700 2rem var(--display);font-variant-numeric:tabular-nums}
+.mute{color:var(--muted);font-size:.85rem}
+.split{display:grid;gap:4px;margin-bottom:12px}
+.split .lab{display:flex;justify-content:space-between;gap:8px;font-size:.85rem}
+.split .bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--line)}
+.split .a{background:var(--accent)} .split .b{background:var(--warn)}
+.hbar{display:grid;grid-template-columns:140px 1fr 40px;gap:8px;align-items:center;font-size:.9rem;margin-bottom:6px}
+.hbar .t{height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.hbar .t i{display:block;height:100%;background:var(--accent)}
+.hbar b{text-align:right;font-variant-numeric:tabular-nums}
+.quotes{display:grid;gap:8px;padding:0;margin:0;list-style:none}
+.quotes li{border-left:3px solid var(--accent);padding:2px 0 2px 10px}
+.empty{color:var(--muted);text-align:center;padding:24px 8px}
+.leaflet-container{font-family:var(--body)}
+@media (max-width:480px){.pair{grid-template-columns:1fr}.pair .or{justify-self:center}.hbar{grid-template-columns:100px 1fr 34px}}
+</style>
+</head>
+<body>
+<header><div class="wrap" style="padding-block:0">
+  <div class="hrow">
+    <h1>Chișinău <span>2040</span></h1>
+    <div class="lang" role="group" aria-label="Limba / Язык">
+      <button data-lang="ro" aria-pressed="true">RO</button>
+      <button data-lang="ru" aria-pressed="false">RU</button>
+    </div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="survey" data-i18n="tabSurvey"></button>
+    <button role="tab" aria-selected="false" data-tab="results" data-i18n="tabResults"></button>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <section id="view-survey">
+    <p class="lead" data-i18n="lead"></p>
+    <p class="note" data-i18n="privacy"></p>
+    <div id="api-banner" class="banner" hidden data-i18n="apiMissing"></div>
+    <div class="progress" id="progress"></div>
+
+    <div class="step" data-step="0">
+      <div class="eyebrow" data-i18n="s1e"></div>
+      <h2 data-i18n="s1t"></h2>
+      <p class="desc" data-i18n="s1d"></p>
+      <div class="map"><div class="lmap" id="map-keep"></div><div class="maplegend" id="legend-keep"></div></div>
+      <div class="pins" id="pins-keep"></div>
+      <div class="field"><label for="q-identity" data-i18n="s1q"></label><textarea id="q-identity" maxlength="1000"></textarea></div>
+    </div>
+
+    <div class="step" data-step="1" hidden>
+      <div class="eyebrow" data-i18n="s2e"></div>
+      <h2 data-i18n="s2t"></h2>
+      <p class="desc" data-i18n="s2d"></p>
+      <div class="map"><div class="lmap" id="map-prob"></div><div class="maplegend" id="legend-prob"></div></div>
+      <div class="pins" id="pins-prob"></div>
+      <div class="field"><label for="q-commute" data-i18n="s2q1"></label><input type="number" id="q-commute" min="0" max="240" inputmode="numeric"></div>
+      <div class="field"><span class="qlabel" data-i18n="s2q2"></span><div class="chips" id="chips-mode"></div></div>
+    </div>
+
+    <div class="step" data-step="2" hidden>
+      <div class="eyebrow" data-i18n="s3e"></div>
+      <h2 data-i18n="s3t"></h2>
+      <p class="desc" data-i18n="s3d"></p>
+      <div id="sliders" style="display:grid;gap:10px"></div>
+    </div>
+
+    <div class="step" data-step="3" hidden>
+      <div class="eyebrow" data-i18n="s4e"></div>
+      <h2 data-i18n="s4t"></h2>
+      <p class="desc" data-i18n="s4d"></p>
+      <div id="pairs" style="display:grid;gap:12px"></div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+          <strong data-i18n="budgetT"></strong><span class="left" id="budget-left"></span>
+        </div>
+        <div class="budget" id="budget"></div>
+      </div>
+    </div>
+
+    <div class="step" data-step="4" hidden>
+      <div class="eyebrow" data-i18n="s5e"></div>
+      <h2 data-i18n="s5t"></h2>
+      <div class="field"><label for="q-remove" data-i18n="s5q1"></label><textarea id="q-remove" maxlength="1000"></textarea></div>
+      <div class="field"><label for="q-diaspora" data-i18n="s5q2"></label><textarea id="q-diaspora" maxlength="1000"></textarea></div>
+    </div>
+
+    <div class="step" data-step="5" hidden>
+      <div class="eyebrow" data-i18n="s6e"></div>
+      <h2 data-i18n="s6t"></h2>
+      <p class="desc" data-i18n="s6d"></p>
+      <div class="field"><span class="qlabel" data-i18n="pSector"></span><div class="chips" id="chips-sector"></div></div>
+      <div class="field"><span class="qlabel" data-i18n="pAge"></span><div class="chips" id="chips-age"></div></div>
+      <div class="field"><span class="qlabel" data-i18n="pTenure"></span><div class="chips" id="chips-tenure"></div></div>
+      <div class="hp" aria-hidden="true"><label for="q-website">Website</label><input type="text" id="q-website" tabindex="-1" autocomplete="off"></div>
+      <div id="done" class="ok" hidden data-i18n="thanks"></div>
+      <div id="err" class="banner" hidden></div>
+    </div>
+
+    <div class="nav">
+      <button class="btn" id="btn-back" data-i18n="back"></button>
+      <button class="btn primary" id="btn-next"></button>
+    </div>
+  </section>
+
+  <section id="view-results" class="res" hidden>
+    <p class="lead" data-i18n="resLead"></p>
+    <div id="res-body"></div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* ===== Настройка: вставьте сюда URL веб-приложения Google Apps Script (см. README) ===== */
+const API_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+/* ======================================================================================= */
+const API_OK = /^https:\/\/script\.google\.com\//.test(API_URL);
+const CENTER=[47.018,28.84], ZOOM=12;
+const T={
+ro:{tabSurvey:"Chestionar",tabResults:"Rezultate",
+lead:"Nu vă cerem să ghiciți viitorul. Vă întrebăm ce este valoros pentru dumneavoastră. Durează 10–12 minute.",
+privacy:"Nu colectăm nume, telefon sau e-mail. Răspunsul este legat doar de acest dispozitiv, ca să-l puteți modifica. Textele libere pot apărea anonim la Rezultate.",
+apiMissing:"Site-ul nu este încă conectat la baza de răspunsuri. Administratorul trebuie să introducă adresa Apps Script.",errLoad:"Rezultatele nu au putut fi încărcate. Încercați mai târziu.",
+s1e:"Pasul 1 din 6",s1t:"Ce nu trebuie pierdut",s1d:"Atingeți harta (o puteți mări) pentru a marca până la 3 locuri care trebuie să rămână, chiar dacă orice altceva se schimbă. Scrieți de ce. Atingeți un punct ca să-l ștergeți.",
+s1q:"Ce face din Chișinău orașul dumneavoastră?",reasonPh:"De ce trebuie păstrat acest loc?",
+s2e:"Pasul 2 din 6",s2t:"Experiența de zi cu zi",s2d:"Marcați până la 5 locuri unde este incomod, periculos, prea cald, întuneric sau unde inundă.",
+s2q1:"Câte minute durează drumul până la serviciu sau școală?",s2q2:"Cum ajungeți de obicei?",probPh:"Ce nu este în regulă aici?",
+modes:["Pe jos","Transport public","Mașină","Bicicletă sau trotinetă","Lucrez de acasă"],
+s3e:"Pasul 3 din 6",s3t:"Pragurile inacceptabilului",s3d:"Mutați cursorul până la limita cu care mai sunteți dispus să trăiți. Aceste praguri vor deveni declanșatori în planul urbanistic.",
+sl:["Timp maxim până la serviciu","Distanța maximă până la un parc sau scuar, pe jos","Cota maximă din venit pentru locuință","Timp maxim până la școală sau grădiniță"],
+s4e:"Pasul 4 din 6",s4t:"Alegeri cu un cost",s4d:"Nu se pot alege ambele variante. Alegeți ce contează mai mult pentru dumneavoastră.",or:"sau",
+pairs:[["Stradă pentru mașini","Stradă pentru autobuz, bicicletă și pietoni"],["Cartiere noi la periferie","Clădiri mai dense lângă stații"],["Păstrarea clădirii vechi","O școală nouă în locul ei"],["Parcare lângă casă","Scuar lângă casă"],["Mai multe locuințe accesibile","Mai mult verde în centru"]],
+budgetT:"Împărțiți 100 de puncte între priorități",left:"Rămase: ",over:"Depășit cu ",
+cats:["Transport","Spații verzi","Locuințe","Școli și grădinițe","Patrimoniu","Siguranță"],
+s5e:"Pasul 5 din 6",s5t:"Ce trebuie eliminat",s5q1:"Ce regulă, interdicție sau procedură vă încurcă cel mai mult să trăiți sau să construiți?",s5q2:"Dacă locuiți în afara Moldovei: ce trebuie să se schimbe ca să vă întoarceți?",
+s6e:"Pasul 6 din 6",s6t:"Despre dumneavoastră",s6d:"Răspunsurile sunt anonime. Aceste date ne ajută să verificăm dacă au fost auziți toți locuitorii.",
+pSector:"Unde locuiți?",pAge:"Vârsta",pTenure:"Locuința",
+sectors:["Botanica","Buiucani","Centru","Ciocana","Râșcani","Sat sau oraș din municipiu","În afara Moldovei"],
+ages:["Sub 18","18–29","30–44","45–64","65+"],tenures:["Proprietar","Chiriaș","Locuiesc cu familia"],
+back:"Înapoi",next:"Înainte",send:"Trimite răspunsul",update:"Actualizează răspunsul",sending:"Se trimite…",
+thanks:"Mulțumim. Răspunsul a fost salvat. Îl puteți modifica și retrimite oricând.",
+errSave:"Răspunsul nu a putut fi salvat. Verificați conexiunea la internet și încercați din nou.",
+resLead:"Rezultatele se actualizează pe măsură ce sosesc răspunsurile. Decizia finală o ia adunarea cetățenească, nu simpla numărare.",
+rCount:"Răspunsuri",rKeep:"locuri de păstrat",rProb:"locuri cu probleme",rMap:"Locuri marcate",rThr:"Pragurile (mediana)",rChoice:"Alegeri",rBudget:"Prioritățile (media punctelor)",rWhy:"De ce trebuie păstrat",rRemove:"Ce trebuie eliminat",
+keepL:"De păstrat",probL:"Problemă",riverL:"Râul Bîc",suburbL:"Suburbii",
+empty:"Încă nu sunt răspunsuri. Primele vor apărea aici imediat după trimitere.",loading:"Se încarcă răspunsurile…",
+units:["min","min","%","min"]},
+ru:{tabSurvey:"Опрос",tabResults:"Результаты",
+lead:"Мы не просим угадать будущее. Мы спрашиваем, что ценно для вас. Это займёт 10–12 минут.",
+privacy:"Мы не собираем имя, телефон или email. Ответ привязан только к этому устройству, чтобы его можно было изменить. Свободные ответы могут анонимно появиться в Результатах.",
+apiMissing:"Сайт ещё не подключён к базе ответов. Администратор должен указать адрес Apps Script.",errLoad:"Не удалось загрузить результаты. Попробуйте позже.",
+s1e:"Шаг 1 из 6",s1t:"Что нельзя потерять",s1d:"Нажмите на карту (её можно приблизить), чтобы отметить до 3 мест, которые должны остаться, даже если всё остальное изменится. Напишите почему. Нажмите на точку, чтобы удалить её.",
+s1q:"Что делает Кишинёв вашим городом?",reasonPh:"Почему это место нужно сохранить?",
+s2e:"Шаг 2 из 6",s2t:"Повседневный опыт",s2d:"Отметьте до 5 мест, где неудобно, опасно, слишком жарко, темно или затапливает.",
+s2q1:"Сколько минут занимает дорога до работы или учёбы?",s2q2:"Как вы обычно добираетесь?",probPh:"Что здесь не так?",
+modes:["Пешком","Общественный транспорт","Автомобиль","Велосипед или самокат","Работаю из дома"],
+s3e:"Шаг 3 из 6",s3t:"Пороги недопустимого",s3d:"Передвиньте ползунок до границы, с которой вы ещё готовы мириться. Эти пороги станут триггерами в генплане.",
+sl:["Максимальное время до работы","Максимальное расстояние до парка или сквера пешком","Максимальная доля дохода на жильё","Максимальное время до школы или детсада"],
+s4e:"Шаг 4 из 6",s4t:"Выбор с ценой",s4d:"Выбрать оба варианта нельзя. Выберите, что для вас важнее.",or:"или",
+pairs:[["Улица для машин","Улица для автобуса, велосипеда и пешеходов"],["Новые районы на окраине","Более плотная застройка у остановок"],["Сохранить старое здание","Новая школа на его месте"],["Парковка у дома","Сквер у дома"],["Больше доступного жилья","Больше зелени в центре"]],
+budgetT:"Распределите 100 очков между приоритетами",left:"Осталось: ",over:"Превышено на ",
+cats:["Транспорт","Зелёные зоны","Жильё","Школы и детсады","Наследие","Безопасность"],
+s5e:"Шаг 5 из 6",s5t:"Что убрать",s5q1:"Какое правило, запрет или процедура больше всего мешают вам жить или строить?",s5q2:"Если вы живёте за пределами Молдовы: что должно измениться, чтобы вы вернулись?",
+s6e:"Шаг 6 из 6",s6t:"О вас",s6d:"Ответы анонимны. Эти данные помогают проверить, услышаны ли все жители.",
+pSector:"Где вы живёте?",pAge:"Возраст",pTenure:"Жильё",
+sectors:["Ботаника","Буюканы","Центр","Чеканы","Рышкановка","Село или город муниципия","За пределами Молдовы"],
+ages:["До 18","18–29","30–44","45–64","65+"],tenures:["Собственник","Арендатор","Живу с семьёй"],
+back:"Назад",next:"Далее",send:"Отправить ответ",update:"Обновить ответ",sending:"Отправка…",
+thanks:"Спасибо. Ответ сохранён. Его можно изменить и отправить снова в любое время.",
+errSave:"Не удалось сохранить ответ. Проверьте подключение к интернету и попробуйте снова.",
+resLead:"Результаты обновляются по мере поступления ответов. Итоговое решение принимает гражданская ассамблея, а не простой подсчёт.",
+rCount:"Ответов",rKeep:"мест сохранить",rProb:"проблемных мест",rMap:"Отмеченные места",rThr:"Пороги (медиана)",rChoice:"Выборы",rBudget:"Приоритеты (среднее число очков)",rWhy:"Почему нужно сохранить",rRemove:"Что убрать",
+keepL:"Сохранить",probL:"Проблема",riverL:"Река Бык",suburbL:"Пригороды",
+empty:"Ответов пока нет. Первые появятся здесь сразу после отправки.",loading:"Загружаем ответы…",
+units:["мин","мин","%","мин"]}};
+const SL=[{min:10,max:90,step:5,def:40},{min:2,max:30,step:1,def:10},{min:10,max:70,step:5,def:30},{min:5,max:45,step:5,def:15}];
+const COL={keep:"#2f7d5b",prob:"#b8681a"};
+let lang="ro";try{lang=localStorage.getItem("pug-lang")||((navigator.language||"").startsWith("ru")?"ru":"ro")}catch(e){}
+const blank=()=>({keep:[],prob:[],identity:"",commute:"",mode:null,thr:SL.map(s=>s.def),pairs:[null,null,null,null,null],budget:[0,0,0,0,0,0],remove:"",diaspora:"",sector:null,age:null,tenure:null});
+let st=blank();try{const d=JSON.parse(localStorage.getItem("pug-draft-v2")||"null");if(d)st=Object.assign(blank(),d)}catch(e){}
+let rid=null;try{rid=localStorage.getItem("pug-rid");if(!rid){rid=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2));localStorage.setItem("pug-rid",rid)}}catch(e){rid=String(Date.now())+Math.random().toString(16).slice(2)}
+let saved=false;try{saved=localStorage.getItem("pug-saved")==="1"}catch(e){}
+let step=0;
+const t=k=>T[lang][k];
+const $=id=>document.getElementById(id);
+function save(){try{localStorage.setItem("pug-draft-v2",JSON.stringify(st))}catch(e){}}
+function el(tag,attrs,text){const e=document.createElement(tag);if(attrs)for(const k in attrs){if(k==="class")e.className=attrs[k];else e.setAttribute(k,attrs[k])}if(text!=null)e.textContent=text;return e}
+
+/* ---- maps ---- */
+/* Поставщики подложки по порядку. Если тайлы одного не грузятся (например, 403), карта переключается на следующий. */
+const OSM_ATTR='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+const TILES=[
+  {url:"https://tile.openstreetmap.org/{z}/{x}/{y}.png",opt:{maxZoom:19,attribution:OSM_ATTR}},
+  {url:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",opt:{maxZoom:19,attribution:'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors, GIS user community'}},
+  {url:"https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",opt:{subdomains:"abc",maxZoom:19,attribution:OSM_ATTR+', HOT'}}
+];
+function makeMap(id){
+  const m=L.map(id,{scrollWheelZoom:false}).setView(CENTER,ZOOM);
+  let i=0,errors=0,layer=null;
+  const use=k=>{
+    if(layer)m.removeLayer(layer);
+    errors=0;layer=L.tileLayer(TILES[k].url,TILES[k].opt);
+    layer.on("tileerror",()=>{if(++errors>=4&&i<TILES.length-1){i++;use(i)}});
+    layer.on("tileload",()=>{errors=0});
+    layer.addTo(m);
+  };
+  use(0);
+  return m;
+}
+const ED={};
+function initEditor(kind){
+  const max=kind==="keep"?3:5,map=makeMap("map-"+kind),layer=L.layerGroup().addTo(map);
+  ED[kind]={map,layer,max};
+  map.on("click",e=>{if(st[kind].length>=max)return;st[kind].push({lat:+e.latlng.lat.toFixed(5),lng:+e.latlng.lng.toFixed(5),note:""});save();renderPins(kind)});
+}
+function renderPins(kind){
+  const ed=ED[kind];if(!ed)return;ed.layer.clearLayers();
+  st[kind].forEach((p,i)=>{
+    const mk=L.marker([p.lat,p.lng],{icon:L.divIcon({className:"pin "+kind,html:String(i+1),iconSize:[24,24]}),keyboard:true,title:"×"});
+    mk.on("click",()=>{st[kind].splice(i,1);save();renderPins(kind)});
+    mk.addTo(ed.layer);
+  });
+  const lg=$("legend-"+kind);lg.textContent="";
+  const sp=el("span");sp.append(el("i",{class:"dot",style:"background:"+COL[kind]}),document.createTextNode(t(kind==="keep"?"keepL":"probL")+" · "+st[kind].length+" / "+ed.max));lg.append(sp);
+  const list=$("pins-"+kind);list.textContent="";
+  st[kind].forEach((p,i)=>{
+    const r=el("div",{class:"pinrow"});
+    r.append(el("span",{class:"pinno"+(kind==="prob"?" w":"")},String(i+1)));
+    const inp=el("input",{type:"text",id:kind+"-note-"+i,placeholder:t(kind==="keep"?"reasonPh":"probPh"),maxlength:"300"});inp.value=p.note||"";
+    inp.addEventListener("input",()=>{p.note=inp.value;save()});r.append(inp);
+    const x=el("button",{class:"x","aria-label":"×"},"×");x.addEventListener("click",()=>{st[kind].splice(i,1);save();renderPins(kind)});r.append(x);
+    list.append(r);
+  });
+}
+
+/* ---- inputs ---- */
+function chips(id,opts,key){const box=$(id);box.textContent="";opts.forEach((o,i)=>{const b=el("button",{class:"chip","aria-pressed":String(st[key]===i)},o);b.addEventListener("click",()=>{st[key]=st[key]===i?null:i;save();chips(id,opts,key)});box.append(b)})}
+function renderSliders(){const box=$("sliders");box.textContent="";SL.forEach((c,i)=>{const w=el("div",{class:"slider"}),top=el("div",{class:"top"});const lab=el("label",{for:"thr-"+i},t("sl")[i]);const out=el("output",{for:"thr-"+i});const u=()=>out.textContent=st.thr[i]+" "+t("units")[i];u();top.append(lab,out);const r=el("input",{type:"range",id:"thr-"+i,min:c.min,max:c.max,step:c.step});r.value=st.thr[i];r.addEventListener("input",()=>{st.thr[i]=+r.value;u();save()});w.append(top,r);box.append(w)})}
+function renderPairs(){const box=$("pairs");box.textContent="";t("pairs").forEach((p,i)=>{const w=el("div",{class:"pair"});[0,1].forEach(j=>{const b=el("button",{"aria-pressed":String(st.pairs[i]===j)},p[j]);b.addEventListener("click",()=>{st.pairs[i]=j;save();renderPairs()});w.append(b);if(j===0)w.append(el("span",{class:"or"},t("or")))});box.append(w)})}
+function renderBudget(){const box=$("budget");box.textContent="";const sum=st.budget.reduce((a,b)=>a+b,0),left=100-sum;const L_=$("budget-left");L_.textContent=left>=0?t("left")+left:t("over")+(-left);L_.classList.toggle("over",left<0);
+ t("cats").forEach((c,i)=>{const r=el("div",{class:"brow"});r.append(el("span",null,c));const s=el("div",{class:"stepper"});const m=el("button",{"aria-label":"−"},"−"),v=el("span",null,String(st.budget[i])),p=el("button",{"aria-label":"+"},"+");
+ m.addEventListener("click",()=>{st.budget[i]=Math.max(0,st.budget[i]-5);save();renderBudget()});p.addEventListener("click",()=>{if(sum>=100)return;st.budget[i]=Math.min(100,st.budget[i]+5);save();renderBudget()});
+ s.append(m,v,p);r.append(s);const bb=el("div",{class:"bbar"});bb.append(el("i",{style:"width:"+st.budget[i]+"%"}));r.append(bb);box.append(r)})}
+function bindText(id,key){const e=$(id);e.value=st[key]||"";e.oninput=()=>{st[key]=e.value;save()}}
+
+function renderStep(){
+ document.querySelectorAll(".step").forEach(s=>s.hidden=+s.dataset.step!==step);
+ const pr=$("progress");pr.textContent="";for(let i=0;i<6;i++)pr.append(el("i",{class:i<=step?"on":""}));
+ $("btn-back").disabled=step===0;
+ const n=$("btn-next");n.textContent=step<5?t("next"):(saved?t("update"):t("send"));n.disabled=step===5&&!API_OK;
+ if(step===0&&ED.keep)setTimeout(()=>ED.keep.map.invalidateSize(),0);
+ if(step===1&&ED.prob)setTimeout(()=>ED.prob.map.invalidateSize(),0);
+ if(saved&&step===5)$("done").hidden=false;
+}
+function renderAll(){
+ document.documentElement.lang=lang;
+ document.querySelectorAll("[data-i18n]").forEach(e=>e.textContent=t(e.dataset.i18n));
+ document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.lang===lang)));
+ $("api-banner").hidden=API_OK;
+ renderPins("keep");renderPins("prob");
+ chips("chips-mode",t("modes"),"mode");chips("chips-sector",t("sectors"),"sector");chips("chips-age",t("ages"),"age");chips("chips-tenure",t("tenures"),"tenure");
+ renderSliders();renderPairs();renderBudget();
+ bindText("q-identity","identity");bindText("q-commute","commute");bindText("q-remove","remove");bindText("q-diaspora","diaspora");
+ renderStep();renderResults();
+}
+document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>{lang=b.dataset.lang;try{localStorage.setItem("pug-lang",lang)}catch(e){}renderAll()}));
+document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
+ document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",String(x===b)));
+ $("view-survey").hidden=b.dataset.tab!=="survey";$("view-results").hidden=b.dataset.tab!=="results";window.scrollTo(0,0);
+ if(b.dataset.tab==="results")loadStats();else renderStep();
+}));
+$("btn-back").addEventListener("click",()=>{if(step>0){step--;renderStep();window.scrollTo(0,0)}});
+$("btn-next").addEventListener("click",async()=>{
+ if(step<5){step++;renderStep();window.scrollTo(0,0);return}
+ if(!API_OK)return;
+ const n=$("btn-next");n.disabled=true;n.textContent=t("sending");$("err").hidden=true;
+ const clip=(s,k)=>String(s||"").slice(0,k);
+ const pin=p=>({lat:p.lat,lng:p.lng,note:clip(p.note,300)});
+ const body={id:rid,website:$("q-website").value,keep:st.keep.map(pin),prob:st.prob.map(pin),identity:clip(st.identity,1000),
+  commute:st.commute===""?null:Math.max(0,Math.min(240,+st.commute||0)),mode:st.mode,thr:st.thr,pairs:st.pairs,budget:st.budget,
+  remove:clip(st.remove,1000),diaspora:clip(st.diaspora,1000),sector:st.sector,age:st.age,tenure:st.tenure,lang};
+ try{
+  const r=await fetch(API_URL,{method:"POST",body:JSON.stringify(body)});
+  const j=await r.json();
+  if(!j.ok)throw new Error(j.error||"fail");
+  saved=true;try{localStorage.setItem("pug-saved","1")}catch(e){}
+  $("done").hidden=false;
+ }catch(e){const er=$("err");er.textContent=t("errSave");er.hidden=false}
+ renderStep();
+});
+
+/* ---- results ---- */
+let stats=null,resState="idle",resMap=null;
+async function loadStats(){
+ if(!API_OK){resState="noapi";renderResults();return}
+ resState="loading";renderResults();
+ try{const r=await fetch(API_URL+"?action=stats");stats=await r.json();resState=stats&&stats.ok?"ok":"err"}catch(e){resState="err"}
+ renderResults();
+}
+function renderResults(){
+ const box=$("res-body");box.textContent="";if(resMap){resMap.remove();resMap=null}
+ if(resState==="noapi"){box.append(el("p",{class:"empty"},t("apiMissing")));return}
+ if(resState==="loading"||resState==="idle"){box.append(el("p",{class:"empty"},t("loading")));return}
+ if(resState==="err"){box.append(el("p",{class:"empty"},t("errLoad")));return}
+ if(!stats.count){box.append(el("p",{class:"empty"},t("empty")));return}
+ const g=el("div",{class:"grid2"});
+ [[stats.count,t("rCount")],[stats.keep.length,t("rKeep")],[stats.prob.length,t("rProb")]].forEach(([v,l])=>{const c=el("div",{class:"card"});c.append(el("div",{class:"big"},String(v)),el("div",{class:"mute"},l));g.append(c)});
+ box.append(g);
+ let s=el("section");s.append(el("h3",null,t("rMap")));
+ const m=el("div",{class:"map"}),md=el("div",{class:"lmap",id:"map-res"});m.append(md);
+ const lg=el("div",{class:"maplegend"});[["keep","keepL"],["prob","probL"]].forEach(([k,lab])=>{const sp=el("span");sp.append(el("i",{class:"dot",style:"background:"+COL[k]}),document.createTextNode(t(lab)));lg.append(sp)});
+ m.append(lg);s.append(m);box.append(s);
+ resMap=makeMap("map-res");
+ stats.keep.forEach(([la,ln])=>L.circleMarker([la,ln],{radius:6,color:COL.keep,weight:1,fillOpacity:.5}).addTo(resMap));
+ stats.prob.forEach(([la,ln])=>L.circleMarker([la,ln],{radius:6,color:COL.prob,weight:1,fillOpacity:.5}).addTo(resMap));
+ s=el("section");s.append(el("h3",null,t("rThr")));const tg=el("div",{class:"grid2"});
+ SL.forEach((c,i)=>{const v=stats.thrMed[i];const cd=el("div",{class:"card"});cd.append(el("div",{class:"big"},v==null?"–":v+" "+t("units")[i]),el("div",{class:"mute"},t("sl")[i]));tg.append(cd)});
+ s.append(tg);box.append(s);
+ s=el("section");s.append(el("h3",null,t("rChoice")));const cc=el("div",{class:"card"});
+ t("pairs").forEach((p,i)=>{const [a,b]=stats.pairs[i]||[0,0];const n=a+b||1;const w=el("div",{class:"split"}),lab=el("div",{class:"lab"});
+  lab.append(el("span",null,p[0]+" · "+Math.round(a/n*100)+"%"),el("span",{style:"text-align:right"},Math.round(b/n*100)+"% · "+p[1]));
+  const bar=el("div",{class:"bar"});bar.append(el("span",{class:"a",style:"width:"+(a/n*100)+"%"}),el("span",{class:"b",style:"width:"+(b/n*100)+"%"}));w.append(lab,bar);cc.append(w)});
+ s.append(cc);box.append(s);
+ s=el("section");s.append(el("h3",null,t("rBudget")));const bc=el("div",{class:"card"});const mx=Math.max(1,...stats.budgetAvg);
+ t("cats").map((c,i)=>[c,stats.budgetAvg[i]||0]).sort((x,y)=>y[1]-x[1]).forEach(([c,v])=>{const r=el("div",{class:"hbar"});const tr=el("div",{class:"t"});tr.append(el("i",{style:"width:"+(v/mx*100)+"%"}));r.append(el("span",null,c),tr,el("b",null,String(Math.round(v))));bc.append(r)});
+ s.append(bc);box.append(s);
+ const quoteSec=(title,items)=>{if(!items||!items.length)return;const q=el("section");q.append(el("h3",null,title));const ul=el("ul",{class:"quotes"});items.forEach(x=>ul.append(el("li",null,x)));q.append(ul);box.append(q)};
+ quoteSec(t("rWhy"),stats.why);quoteSec(t("rRemove"),stats.remove);
+}
+
+initEditor("keep");initEditor("prob");
+renderAll();
+</script>
+</body>
+</html>
